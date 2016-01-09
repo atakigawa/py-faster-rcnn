@@ -22,7 +22,7 @@ len=${#array[@]}
 EXTRA_ARGS=${array[@]:$num_basic_args:$len}
 EXTRA_ARGS_SLUG=${EXTRA_ARGS// /_}
 
-LOG="experiments/logs/orochi_frcnn_${NET}_${EXTRA_ARGS_SLUG}_train.txt.`date +'%Y-%m-%d_%H-%M-%S'`"
+LOG="experiments/logs/orochi_frcnn_${NET}_${DATASET_TRAIN}.`date +'%Y-%m-%d_%H-%M-%S'`.txt"
 exec &> >(tee -a "$LOG")
 echo Logging output to "$LOG"
 
