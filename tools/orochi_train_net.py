@@ -14,22 +14,24 @@ from fast_rcnn.train import get_training_roidb, train_net
 from fast_rcnn.config import cfg, cfg_from_file, cfg_from_list, get_output_dir
 from datasets.orochi_factory import get_imdb
 import datasets.imdb
+import datasets.ds_cfg
 import caffe
 import argparse
 import pprint
 import numpy as np
 import sys
+import os.path as osp
 
 def parse_args():
     """
     Parse input arguments
     """
-    parser = argparse.ArgumentParser(description='Train a Fast R-CNN network')
+    parser = argparse.ArgumentParser(description='Train a Faster R-CNN network')
     parser.add_argument('--gpu', dest='gpu_id',
                         help='GPU device id to use [0]',
                         default=0, type=int)
-    parser.add_argument('--solver', dest='solver',
-                        help='solver prototxt',
+    parser.add_argument('--solver-root', dest='solver_root',
+                        help='solver prototxt root',
                         default=None, type=str)
     parser.add_argument('--iters', dest='max_iters',
                         help='number of iterations to train',
@@ -40,7 +42,7 @@ def parse_args():
     parser.add_argument('--cfg', dest='cfg_file',
                         help='optional config file',
                         default=None, type=str)
-    parser.add_argument('--imdb', dest='imdb_name',
+    parser.add_argument('--ds-name', dest='ds_name',
                         help='dataset to train on',
                         required=True, type=str)
     parser.add_argument('--rand', dest='randomize',
@@ -92,6 +94,11 @@ if __name__ == '__main__':
     print('Using config:')
     pprint.pprint(cfg)
 
+    dss = datasets.ds_cfg.get_cfg().AVAILABLE_DATASETS
+    model_file_dir = dss[args.ds_name].model_file_dir_name
+    solver_prototxt = osp.join(args.solver_root, model_file_dir, 'solver.prototxt')
+    print('solver prototxt: {}'.format(solver_prototxt))
+
     if not args.randomize:
         # fix the random seeds (numpy and caffe) for reproducibility
         np.random.seed(cfg.RNG_SEED)
@@ -101,12 +108,13 @@ if __name__ == '__main__':
     caffe.set_mode_gpu()
     caffe.set_device(args.gpu_id)
 
-    imdb, roidb = combined_roidb(args.imdb_name)
+    imdb_name = args.ds_name + '_train'
+    imdb, roidb = combined_roidb(imdb_name)
     print '{:d} roidb entries'.format(len(roidb))
 
     output_dir = get_output_dir(imdb, None)
     print 'Output will be saved to `{:s}`'.format(output_dir)
 
-    train_net(args.solver, roidb, output_dir,
+    train_net(solver_prototxt, roidb, output_dir,
              pretrained_model=args.pretrained_model,
              max_iters=args.max_iters)

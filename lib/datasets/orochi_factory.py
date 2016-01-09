@@ -11,32 +11,18 @@ __sets = {}
 
 import datasets
 from datasets.orochi_dataset import orochi_dataset
+import datasets.ds_cfg
 import numpy as np
 from easydict import EasyDict as edict
 
 
 def init():
-    cfg = get_cfg()
-    for ds_name in cfg.AVAILABLE_DATASETS:
+    cfg = datasets.ds_cfg.get_cfg()
+    for ds_name, _ in cfg.AVAILABLE_DATASETS.items():
         for image_set in ['train', 'test']:
             name = '{}_{}'.format(ds_name, image_set)
             __sets[name] = (lambda ds_name=ds_name, image_set=image_set:
                 orochi_dataset(ds_name, image_set, cfg))
-
-
-def get_cfg(filename=None):
-    import yaml
-    import os.path as osp
-
-    if filename is None:
-        filename = osp.join(
-            datasets.ROOT_DIR, 'experiments', 'cfgs',
-            'orochi_frcnn_dataset.yml')
-
-    with open(filename, 'r') as f:
-        cfg = edict(yaml.load(f))
-
-    return cfg
 
 
 def get_imdb(name):
