@@ -29,13 +29,6 @@ class orochi_dataset(datasets.imdb):
 
         self._roidb_handler = self.selective_search_roidb
 
-        # PASCAL specific config options
-        self.config = {'cleanup'  : True,
-                       'use_salt' : True,
-                       'top_k'    : 2000,
-                       'use_diff' : False,
-                       'rpn_file' : None}
-
         assert os.path.exists(self._data_path), \
                 'data path does not exist: {}'.format(self._data_path)
 
@@ -104,68 +97,6 @@ class orochi_dataset(datasets.imdb):
 
         return gt_roidb
 
-    def selective_search_roidb(self):
-        """
-        Return the database of selective search regions of interest.
-        Ground-truth ROIs are also included.
-
-        This function loads/saves from/to a cache file to speed up future calls.
-        """
-        cache_file = os.path.join(self.cache_path,
-                                  self.name + '_selective_search_roidb.pkl')
-
-        if os.path.exists(cache_file):
-            with open(cache_file, 'rb') as fid:
-                roidb = pickle.load(fid)
-            print '{} ss roidb loaded from {}'.format(self.name, cache_file)
-            return roidb
-
-        if int(self._year) == 2007 or self._image_set != 'test':
-            gt_roidb = self.gt_roidb()
-            ss_roidb = self._load_selective_search_roidb(gt_roidb)
-            roidb = datasets.imdb.merge_roidbs(gt_roidb, ss_roidb)
-        else:
-            roidb = self._load_selective_search_roidb(None)
-        with open(cache_file, 'wb') as fid:
-            pickle.dump(roidb, fid, pickle.HIGHEST_PROTOCOL)
-        print 'wrote ss roidb to {}'.format(cache_file)
-
-        return roidb
-
-    def rpn_roidb(self):
-        if int(self._year) == 2007 or self._image_set != 'test':
-            gt_roidb = self.gt_roidb()
-            rpn_roidb = self._load_rpn_roidb(gt_roidb)
-            roidb = datasets.imdb.merge_roidbs(gt_roidb, rpn_roidb)
-        else:
-            roidb = self._load_rpn_roidb(None)
-
-        return roidb
-
-    def _load_rpn_roidb(self, gt_roidb):
-        filename = self.config['rpn_file']
-        print 'loading {}'.format(filename)
-        assert os.path.exists(filename), \
-               'rpn data not found at: {}'.format(filename)
-        with open(filename, 'rb') as f:
-            box_list = pickle.load(f)
-        return self.create_roidb_from_box_list(box_list, gt_roidb)
-
-    def _load_selective_search_roidb(self, gt_roidb):
-        filename = os.path.abspath(os.path.join(self.cache_path, '..',
-                                                'selective_search_data',
-                                                self.name + '.mat'))
-        assert os.path.exists(filename), \
-               'Selective search data not found at: {}'.format(filename)
-        raw_data = sio.loadmat(filename)['boxes'].ravel()
-
-        box_list = []
-        for i in xrange(raw_data.shape[0]):
-            box_list.append(raw_data[i][:, (1, 0, 3, 2)] - 1)
-
-        return self.create_roidb_from_box_list(box_list, gt_roidb)
-
-
     def _load_gt_roidb(self):
         gtb_obj_path = os.path.join(self._data_path, 'gtb_obj.pkl')
         assert os.path.exists(gtb_obj_path), \
@@ -196,6 +127,67 @@ class orochi_dataset(datasets.imdb):
                     'flipped' : False}
 
         return [create_roi_record(index) for index in self.image_index]
+
+    def selective_search_roidb(self):
+        """
+        Return the database of selective search regions of interest.
+        Ground-truth ROIs are also included.
+
+        This function loads/saves from/to a cache file to speed up future calls.
+        """
+        cache_file = os.path.join(self.cache_path,
+                                  self.name + '_selective_search_roidb.pkl')
+        if os.path.exists(cache_file):
+            with open(cache_file, 'rb') as fid:
+                roidb = pickle.load(fid)
+            print '{} ss roidb loaded from {}'.format(self.name, cache_file)
+            return roidb
+
+        if self._image_set != 'test':
+            gt_roidb = self.gt_roidb()
+            ss_roidb = self._load_selective_search_roidb(gt_roidb)
+            roidb = datasets.imdb.merge_roidbs(gt_roidb, ss_roidb)
+        else:
+            roidb = self._load_selective_search_roidb(None)
+        with open(cache_file, 'wb') as fid:
+            pickle.dump(roidb, fid, pickle.HIGHEST_PROTOCOL)
+        print 'wrote ss roidb to {}'.format(cache_file)
+
+        return roidb
+
+    def _load_selective_search_roidb(self, gt_roidb):
+        raise NotImplementedError
+        # filename = os.path.abspath(os.path.join(self.cache_path, '..',
+        #                                         'selective_search_data',
+        #                                         self.name + '.mat'))
+        # assert os.path.exists(filename), \
+        #        'Selective search data not found at: {}'.format(filename)
+        # raw_data = sio.loadmat(filename)['boxes'].ravel()
+
+        # box_list = []
+        # for i in xrange(raw_data.shape[0]):
+        #     box_list.append(raw_data[i][:, (1, 0, 3, 2)] - 1)
+
+        # return self.create_roidb_from_box_list(box_list, gt_roidb)
+
+    def rpn_roidb(self):
+        if self._image_set != 'test':
+            gt_roidb = self.gt_roidb()
+            rpn_roidb = self._load_rpn_roidb(gt_roidb)
+            roidb = datasets.imdb.merge_roidbs(gt_roidb, rpn_roidb)
+        else:
+            roidb = self._load_rpn_roidb(None)
+
+        return roidb
+
+    def _load_rpn_roidb(self, gt_roidb):
+        filename = self.config['rpn_file']
+        print 'loading {}'.format(filename)
+        assert os.path.exists(filename), \
+               'rpn data not found at: {}'.format(filename)
+        with open(filename, 'rb') as f:
+            box_list = pickle.load(f)
+        return self.create_roidb_from_box_list(box_list, gt_roidb)
 
     def evaluate_detections(self, all_boxes, output_dir=None):
         """
