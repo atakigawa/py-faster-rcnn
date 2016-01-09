@@ -1,0 +1,7 @@
+DS_ROOT_DIR: /opt/storage/orochi_frcnn
+AVAILABLE_DATASETS:
+  # white bg, black fg, numbers only
+  - 'wbbf_num_001'
+  # black bg, white fg, numbers only
+  - 'bbwf_num_001'
+  # alnum, hiragana, ... and so on
