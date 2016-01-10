@@ -8,7 +8,7 @@ layer {
   python_param {
     module: 'roi_data_layer.layer'
     layer: 'RoIDataLayer'
-    param_str: "'num_classes': 11"
+    param_str: "'num_classes': {{num_classes}}"
   }
 }
 
@@ -359,7 +359,7 @@ layer {
   python_param {
     module: 'rpn.proposal_target_layer'
     layer: 'ProposalTargetLayer'
-    param_str: "'num_classes': 11"
+    param_str: "'num_classes': {{num_classes}}"
   }
 }
 
@@ -439,7 +439,7 @@ layer {
   param { lr_mult: 1.0 }
   param { lr_mult: 2.0 }
   inner_product_param {
-    num_output: 11
+    num_output: {{num_classes}}
     weight_filler {
       type: "gaussian"
       std: 0.01
@@ -458,7 +458,7 @@ layer {
   param { lr_mult: 1.0 }
   param { lr_mult: 2.0 }
   inner_product_param {
-    num_output: 44    # 4 * 11(classes)
+    num_output: {{num_bbox_pred_output}}    # 4 * num_classes
     weight_filler {
       type: "gaussian"
       std: 0.001

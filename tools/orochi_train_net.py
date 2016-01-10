@@ -7,7 +7,7 @@
 # Written by Ross Girshick
 # --------------------------------------------------------
 
-"""Train a Fast R-CNN network on a region of interest database."""
+"""Train a Faster R-CNN network."""
 
 import _init_paths
 from fast_rcnn.train import get_training_roidb, train_net
@@ -21,6 +21,8 @@ import pprint
 import numpy as np
 import sys
 import os.path as osp
+from datetime import datetime
+
 
 def parse_args():
     """
@@ -30,8 +32,11 @@ def parse_args():
     parser.add_argument('--gpu', dest='gpu_id',
                         help='GPU device id to use [0]',
                         default=0, type=int)
-    parser.add_argument('--solver-root', dest='solver_root',
-                        help='solver prototxt root',
+    parser.add_argument('--prototxt-root', dest='prototxt_root',
+                        help='prototxt root',
+                        default=None, type=str)
+    parser.add_argument('--prototxt-suffix', dest='prototxt_suffix',
+                        help='optional prototxt suffix',
                         default=None, type=str)
     parser.add_argument('--iters', dest='max_iters',
                         help='number of iterations to train',
@@ -59,6 +64,7 @@ def parse_args():
     args = parser.parse_args()
     return args
 
+
 def combined_roidb(imdb_names):
     def get_roidb(imdb_name):
         imdb = get_imdb(imdb_name)
@@ -78,6 +84,45 @@ def combined_roidb(imdb_names):
         imdb = get_imdb(imdb_names)
     return imdb, roidb
 
+
+def generate_prototxts(imdb, args):
+    suffix = '{0:%Y-%m-%d_%H-%M-%S}'.format(datetime.now()) if \
+            args.prototxt_suffix is None else args.prototxt_suffix
+
+    dss = datasets.ds_cfg.get_cfg().AVAILABLE_DATASETS
+    model_file_dir = dss[args.ds_name].model_file_dir_name
+    solver_template_path = osp.join(
+            args.prototxt_root, model_file_dir, 'solver_template.prototxt')
+    train_template_path = osp.join(
+            args.prototxt_root, model_file_dir, 'train_template.prototxt')
+    solver_prototxt_path = osp.join(
+            args.prototxt_root, model_file_dir, 'train_gen',
+            'solver_{}.prototxt'.format(suffix))
+    train_prototxt_path = osp.join(
+            args.prototxt_root, model_file_dir, 'train_gen',
+            'train_{}.prototxt'.format(suffix))
+
+    with open(solver_template_path, 'r') as f:
+        solver_txt = f.read()
+    with open(train_template_path, 'r') as f:
+        train_txt = f.read()
+
+    solver_txt = solver_txt.replace(
+            '{{train_prototxt_path}}', train_prototxt_path)
+
+    train_txt = train_txt.replace(
+            '{{num_classes}}', str(imdb.num_classes))
+    train_txt = train_txt.replace(
+            '{{num_bbox_pred_output}}', str(imdb.num_classes * 4))
+
+    with open(solver_prototxt_path, 'w') as f:
+        f.write(solver_txt)
+    with open(train_prototxt_path, 'w') as f:
+        f.write(train_txt)
+
+    return solver_prototxt_path
+
+
 if __name__ == '__main__':
     args = parse_args()
 
@@ -94,11 +139,6 @@ if __name__ == '__main__':
     print('Using config:')
     pprint.pprint(cfg)
 
-    dss = datasets.ds_cfg.get_cfg().AVAILABLE_DATASETS
-    model_file_dir = dss[args.ds_name].model_file_dir_name
-    solver_prototxt = osp.join(args.solver_root, model_file_dir, 'solver.prototxt')
-    print('solver prototxt: {}'.format(solver_prototxt))
-
     if not args.randomize:
         # fix the random seeds (numpy and caffe) for reproducibility
         np.random.seed(cfg.RNG_SEED)
@@ -111,6 +151,9 @@ if __name__ == '__main__':
     imdb_name = args.ds_name + '_train'
     imdb, roidb = combined_roidb(imdb_name)
     print '{:d} roidb entries'.format(len(roidb))
+
+    solver_prototxt = generate_prototxts(imdb, args)
+    print('solver prototxt: {}'.format(solver_prototxt))
 
     output_dir = get_output_dir(imdb, None)
     print 'Output will be saved to `{:s}`'.format(output_dir)

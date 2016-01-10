@@ -1,0 +1,4 @@
+**/test_gen/*
+!**/test_gen/.gitkeep
+**/train_gen/*
+!**/train_gen/.gitkeep
