@@ -58,7 +58,7 @@ def voc_eval_det(VOCopts, comp_id, cls, draw):
     # [ids,confidence,b1,b2,b3,b4]=
     #   textread(sprintf(VOCopts.detrespath,id,cls),'%s %f %f %f %f %f');
     with open(VOCopts.detrespath().format(comp_id, cls)) as f:
-        dets = np.loadtxt(f, dtype=[('id', np.str, 6),
+        dets = np.loadtxt(f, dtype=[('id', np.str, 16),  # a value long enough
                                     ('confidence', np.float),
                                     ('xmin', np.float),
                                     ('ymin', np.float),
