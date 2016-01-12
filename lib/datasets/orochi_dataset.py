@@ -10,14 +10,13 @@ import datasets.imdb
 import PIL
 import numpy as np
 import scipy.sparse
-import scipy.io as sio
-import utils.cython_bbox
 import cPickle as pickle
-import subprocess
+import datasets.orochi_eval as orochi_eval
+
 
 class orochi_dataset(datasets.imdb):
     def __init__(self, ds_name, image_set, cfg):
-        datasets.imdb.__init__(self,  '{}_{}'.format(ds_name, image_set))
+        datasets.imdb.__init__(self, '{}_{}'.format(ds_name, image_set))
         self._ds_name = ds_name
         self._image_set = image_set
         self._data_path = os.path.join(cfg.DS_ROOT_DIR, ds_name)
@@ -43,7 +42,7 @@ class orochi_dataset(datasets.imdb):
         assert os.path.exists(image_set_file), \
                 'Path does not exist: {}'.format(image_set_file)
         with open(image_set_file) as f:
-            image_index = [x.strip() for x in f.readlines()]
+            image_index = np.loadtxt(f, dtype=np.str)
         return image_index
 
     def _image_path_from_index(self, index):
@@ -80,7 +79,8 @@ class orochi_dataset(datasets.imdb):
         """
         Return the database of ground-truth regions of interest.
 
-        This function loads/saves from/to a cache file to speed up future calls.
+        This function loads/saves from/to a cache file to speed up
+        future calls.
         """
         cache_file = os.path.join(self.cache_path, self.name + '_gt_roidb.pkl')
         if os.path.exists(cache_file):
@@ -114,17 +114,17 @@ class orochi_dataset(datasets.imdb):
             overlaps = np.zeros((num_objs, self.num_classes), dtype=np.float32)
 
             for i in xrange(num_objs):
-                cls = self._class_to_ind[labels[i]]
-                gt_classes[i] = cls
-                overlaps[i, cls] = 1.0
+                cls_ind = self._class_to_ind[labels[i]]
+                gt_classes[i] = cls_ind
+                overlaps[i, cls_ind] = 1.0
 
             # will be inflated in lib/roi_data_layer/roidb.py
             overlaps = scipy.sparse.csr_matrix(overlaps)
 
-            return {'boxes' : boxes,
+            return {'boxes': boxes,
                     'gt_classes': gt_classes,
-                    'gt_overlaps' : overlaps,
-                    'flipped' : False}
+                    'gt_overlaps': overlaps,
+                    'flipped': False}
 
         return [create_roi_record(index) for index in self.image_index]
 
@@ -133,7 +133,8 @@ class orochi_dataset(datasets.imdb):
         Return the database of selective search regions of interest.
         Ground-truth ROIs are also included.
 
-        This function loads/saves from/to a cache file to speed up future calls.
+        This function loads/saves from/to a cache file to speed up
+        future calls.
         """
         cache_file = os.path.join(self.cache_path,
                                   self.name + '_selective_search_roidb.pkl')
@@ -189,6 +190,28 @@ class orochi_dataset(datasets.imdb):
             box_list = pickle.load(f)
         return self.create_roidb_from_box_list(box_list, gt_roidb)
 
+    def _conv_all_boxes_for_eval(self, all_boxes):
+        clss = self.classes[1:]  # remove __background__
+        img_id_len = len(self.image_index[0])
+        ret = [() for _ in clss]
+        for i, cls in enumerate(clss):
+            cls_ind = self._class_to_ind[cls]
+            img_ids = np.zeros(0, dtype=(np.str, img_id_len))
+            dets = np.zeros((0, 5), dtype=np.float)
+            for im_ind, im_id in enumerate(self.image_index):
+                dets_in_img = all_boxes[cls_ind][im_ind]
+                if dets_in_img == []:
+                    continue
+
+                img_id_dup = np.empty(dets_in_img.shape[0],
+                                      dtype=(np.str, img_id_len))
+                img_id_dup.fill(im_id)
+                img_ids = np.hstack((img_ids, img_id_dup))
+                dets = np.vstack((dets, dets_in_img))
+
+            ret[i] = (img_ids, dets)
+        return clss, ret
+
     def evaluate_detections(self, all_boxes, output_dir=None):
         """
         all_boxes is a list of length number-of-classes.
@@ -198,7 +221,15 @@ class orochi_dataset(datasets.imdb):
 
         all_boxes[class][image] = [] or np.array of shape #dets x 5
         """
-        raise NotImplementedError
+
+        gtb_obj_path = os.path.join(self._data_path, 'gtb_obj.pkl')
+        assert os.path.exists(gtb_obj_path), \
+                'Path does not exist: {}'.format(gtb_obj_path)
+        with open(gtb_obj_path, 'rb') as fid:
+            gtb_obj = pickle.load(fid)
+
+        clss, boxes = self._conv_all_boxes_for_eval(all_boxes)
+        orochi_eval.orochi_eval(clss, boxes, gtb_obj)
 
     def append_flipped_images(self):
         num_images = self.num_images
@@ -206,16 +237,16 @@ class orochi_dataset(datasets.imdb):
                   for i in xrange(num_images)]
         for i in xrange(num_images):
             width = widths[i]
-            adjust = width % 2 # adjust when width is odd
+            adjust = width % 2   # adjust when width is odd
             boxes = self.roidb[i]['boxes'].copy()
             oldx1 = boxes[:, 0].copy()
             oldx2 = boxes[:, 2].copy()
             boxes[:, 0] = np.maximum(0, width - oldx2 - adjust)
             boxes[:, 2] = np.maximum(0, width - oldx1 - adjust)
             assert (boxes[:, 2] >= boxes[:, 0]).all()
-            entry = {'boxes' : boxes,
-                     'gt_overlaps' : self.roidb[i]['gt_overlaps'],
-                     'gt_classes' : self.roidb[i]['gt_classes'],
-                     'flipped' : True}
+            entry = {'boxes': boxes,
+                     'gt_overlaps': self.roidb[i]['gt_overlaps'],
+                     'gt_classes': self.roidb[i]['gt_classes'],
+                     'flipped': True}
             self.roidb.append(entry)
         self._image_index = self._image_index * 2
