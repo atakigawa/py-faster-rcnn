@@ -16,6 +16,12 @@ import scipy.io as sio
 import utils.cython_bbox
 import cPickle
 import subprocess
+from fast_rcnn.config import cfg
+
+# We assume your matlab binary is in your path and called `matlab'.
+# If either is not true, just add it to your path and alias it as matlab, or
+# you could change this file.
+MATLAB = 'matlab'
 
 class pascal_voc(datasets.imdb):
     def __init__(self, image_set, year, devkit_path=None):
@@ -48,6 +54,12 @@ class pascal_voc(datasets.imdb):
                 'VOCdevkit path does not exist: {}'.format(self._devkit_path)
         assert os.path.exists(self._data_path), \
                 'Path does not exist: {}'.format(self._data_path)
+
+        if cfg.USE_MATLAB:
+            if datasets.which(MATLAB) is None:
+                msg = ("MATLAB command '{}' not found. "
+                       "Please add '{}' to your PATH.").format(MATLAB, MATLAB)
+                raise EnvironmentError(msg)
 
     def image_path_at(self, i):
         """
@@ -256,9 +268,27 @@ class pascal_voc(datasets.imdb):
         print('Running:\n{}'.format(cmd))
         status = subprocess.call(cmd, shell=True)
 
+    def _do_python_eval(self, comp_id, output_dir='output'):
+        rm_results = self.config['cleanup']
+
+        path = os.path.join(os.path.dirname(__file__),
+                            'VOCdevkit-python-emu')
+        cmd = 'cd {} && '.format(path)
+        cmd += 'python voc_eval.py '
+        # notice the first argument is year instead of devkit path
+        cmd += '\'{:s}\' \'{:s}\' \'{:s}\' \'{:s}\' {:d}' \
+               .format(self._year, comp_id,
+                       self._image_set, output_dir, int(rm_results))
+        print('Running:\n{}'.format(cmd))
+        status = subprocess.call(cmd, shell=True)
+
     def evaluate_detections(self, all_boxes, output_dir):
         comp_id = self._write_voc_results_file(all_boxes)
-        self._do_matlab_eval(comp_id, output_dir)
+
+        if cfg.USE_MATLAB:
+            self._do_matlab_eval(comp_id, output_dir)
+        else:
+            self._do_python_eval(comp_id, output_dir)
 
     def competition_mode(self, on):
         if on:
