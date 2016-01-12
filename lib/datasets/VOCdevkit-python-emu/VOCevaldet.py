@@ -68,6 +68,9 @@ def voc_eval_det(VOCopts, comp_id, cls, draw):
     confidence = dets['confidence']
     _BB = dets[['xmin', 'ymin', 'xmax', 'ymax']]
     BB = _BB.view(dtype=(np.float, 4))
+    # Make pixel indexes back to 0-based.
+    # pixels are saved in matlab 1-based style in _write_voc_results_file().
+    BB = BB - 1
 
     # sort detections by decreasing confidence
     si = np.argsort(-confidence)

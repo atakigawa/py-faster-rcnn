@@ -92,7 +92,8 @@ def parse_args():
     parser.add_argument('comp_id', help='comp id', type=str)
     parser.add_argument('test_set', help='test set', type=str)
     parser.add_argument('out_dir', help='out dir', type=str)
-    parser.add_argument('rm_results', help='out dir', type=int)
+    parser.add_argument('rm_results',
+            help='set true to remove detection results', type=int)
 
     if len(sys.argv) == 1:
         parser.print_help()
