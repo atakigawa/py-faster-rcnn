@@ -12,13 +12,8 @@ from . import factory
 import os.path as osp
 ROOT_DIR = osp.join(osp.dirname(__file__), '..', '..')
 
-# We assume your matlab binary is in your path and called `matlab'.
-# If either is not true, just add it to your path and alias it as matlab, or
-# you could change this file.
-MATLAB = 'matlab'
-
 # http://stackoverflow.com/questions/377017/test-if-executable-exists-in-python
-def _which(program):
+def which(program):
     import os
     def is_exe(fpath):
         return os.path.isfile(fpath) and os.access(fpath, os.X_OK)
@@ -35,8 +30,3 @@ def _which(program):
                 return exe_file
 
     return None
-
-#if _which(MATLAB) is None:
-#    msg = ("MATLAB command '{}' not found. "
-#           "Please add '{}' to your PATH.").format(MATLAB, MATLAB)
-#    raise EnvironmentError(msg)

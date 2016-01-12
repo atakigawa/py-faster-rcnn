@@ -8,3 +8,4 @@ TRAIN:
   PROPOSAL_METHOD: gt
 TEST:
   HAS_RPN: True
+USE_MATLAB: False

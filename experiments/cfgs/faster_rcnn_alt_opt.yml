@@ -1,3 +1,4 @@
 EXP_DIR: faster_rcnn_alt_opt
 TEST:
   HAS_RPN: True
+USE_MATLAB: False
