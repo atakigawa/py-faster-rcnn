@@ -28,7 +28,8 @@ def parse_args():
     """
     Parse input arguments
     """
-    parser = argparse.ArgumentParser(description='Train a Faster R-CNN network')
+    parser = argparse.ArgumentParser(
+        description='Train a Faster R-CNN network')
     parser.add_argument('--gpu', dest='gpu_id',
                         help='GPU device id to use [0]',
                         default=0, type=int)
@@ -87,20 +88,20 @@ def combined_roidb(imdb_names):
 
 def generate_prototxts(imdb, args):
     suffix = '{0:%Y-%m-%d_%H-%M-%S}'.format(datetime.now()) if \
-            args.prototxt_suffix is None else args.prototxt_suffix
+        args.prototxt_suffix is None else args.prototxt_suffix
 
     dss = datasets.ds_cfg.get_cfg().AVAILABLE_DATASETS
-    model_file_dir = dss[args.ds_name].model_file_dir_name
+    prototxt_file_dir = dss[args.ds_name].prototxt_file_dir_name
     solver_template_path = osp.join(
-            args.prototxt_root, model_file_dir, 'solver_template.prototxt')
+        args.prototxt_root, prototxt_file_dir, 'solver_template.prototxt')
     train_template_path = osp.join(
-            args.prototxt_root, model_file_dir, 'train_template.prototxt')
+        args.prototxt_root, prototxt_file_dir, 'train_template.prototxt')
     solver_prototxt_path = osp.join(
-            args.prototxt_root, model_file_dir, 'train_gen',
-            'solver_{}.prototxt'.format(suffix))
+        args.prototxt_root, prototxt_file_dir, 'train_gen',
+        'solver_{}.prototxt'.format(suffix))
     train_prototxt_path = osp.join(
-            args.prototxt_root, model_file_dir, 'train_gen',
-            'train_{}.prototxt'.format(suffix))
+        args.prototxt_root, prototxt_file_dir, 'train_gen',
+        'train_{}.prototxt'.format(suffix))
 
     with open(solver_template_path, 'r') as f:
         solver_txt = f.read()
@@ -108,12 +109,12 @@ def generate_prototxts(imdb, args):
         train_txt = f.read()
 
     solver_txt = solver_txt.replace(
-            '{{train_prototxt_path}}', train_prototxt_path)
+        '{{train_prototxt_path}}', train_prototxt_path)
 
     train_txt = train_txt.replace(
-            '{{num_classes}}', str(imdb.num_classes))
+        '{{num_classes}}', str(imdb.num_classes))
     train_txt = train_txt.replace(
-            '{{num_bbox_pred_output}}', str(imdb.num_classes * 4))
+        '{{num_bbox_pred_output}}', str(imdb.num_classes * 4))
 
     with open(solver_prototxt_path, 'w') as f:
         f.write(solver_txt)

@@ -17,7 +17,9 @@ import datasets.ds_cfg
 import caffe
 import argparse
 import pprint
-import time, os, sys
+import time
+import os
+import sys
 import os.path as osp
 from datetime import datetime
 
@@ -62,23 +64,23 @@ def parse_args():
 
 def generate_prototxts(imdb, args):
     suffix = '{0:%Y-%m-%d_%H-%M-%S}'.format(datetime.now()) if \
-            args.prototxt_suffix is None else args.prototxt_suffix
+        args.prototxt_suffix is None else args.prototxt_suffix
 
     dss = datasets.ds_cfg.get_cfg().AVAILABLE_DATASETS
-    model_file_dir = dss[args.ds_name].model_file_dir_name
+    prototxt_file_dir = dss[args.ds_name].prototxt_file_dir_name
     test_template_path = osp.join(
-            args.prototxt_root, model_file_dir, 'test_template.prototxt')
+        args.prototxt_root, prototxt_file_dir, 'test_template.prototxt')
     test_prototxt_path = osp.join(
-            args.prototxt_root, model_file_dir, 'test_gen',
-            'test_{}.prototxt'.format(suffix))
+        args.prototxt_root, prototxt_file_dir, 'test_gen',
+        'test_{}.prototxt'.format(suffix))
 
     with open(test_template_path, 'r') as f:
         test_txt = f.read()
 
     test_txt = test_txt.replace(
-           '{{num_classes}}', str(imdb.num_classes))
+        '{{num_classes}}', str(imdb.num_classes))
     test_txt = test_txt.replace(
-            '{{num_bbox_pred_output}}', str(imdb.num_classes * 4))
+        '{{num_bbox_pred_output}}', str(imdb.num_classes * 4))
 
     with open(test_prototxt_path, 'w') as f:
         f.write(test_txt)

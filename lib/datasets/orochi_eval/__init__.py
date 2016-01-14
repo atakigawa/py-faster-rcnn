@@ -35,6 +35,9 @@ def print_eval_results(output_dir):
     show results from pre-computed results file.
     """
     path = osp.join(output_dir, 'eval_result.pkl')
+    if not osp.isfile(path):
+        raise IOError(('{:s} not found.').format(path))
+
     with open(path, 'rb') as f:
         results = pickle.load(f)
 

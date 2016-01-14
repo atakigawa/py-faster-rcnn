@@ -2,8 +2,10 @@ DS_ROOT_DIR: /opt/storage/orochi_frcnn
 AVAILABLE_DATASETS:
   # white bg, black fg, numbers only
   wbbf_num_001:
-    model_file_dir_name: whiteblack_num
+    prototxt_file_dir_name: whiteblack_num
+    test_model_file_name: output/orochi_frcnn_end2end/wbbf_num_001_train/zf_orochi_frcnn_iter_70000.caffemodel
   # black bg, white fg, numbers only
   bbwf_num_001:
-    model_file_dir_name: whiteblack_num
+    prototxt_file_dir_name: whiteblack_num
+    test_model_file_name: output/orochi_frcnn_end2end/bbwf_num_001_train/zf_orochi_frcnn_iter_70000.caffemodel
   # alnum, hiragana, ... and so on
