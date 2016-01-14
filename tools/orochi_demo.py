@@ -81,13 +81,20 @@ def demo(net, imdb, image_path):
 
     # Visualize detections
     CONF_THRESH = 0.3
-    NMS_THRESH = 0.3
+    # low NMS_THRESH rate is OK for OCR use case.
+    NMS_THRESH = 0.1
     # skip background
     cls_inds = np.zeros(0, dtype=np.int)
     dets = np.zeros((0, 5), dtype=np.float32)
     for cls_ind, _ in enumerate(imdb.classes[1:], 1):
         cls_boxes = boxes[:, (4 * cls_ind):(4 * (cls_ind + 1))]
         cls_scores = scores[:, cls_ind]
+
+        # sort in descending order of score
+        si = np.argsort(-cls_scores)
+        cls_boxes = cls_boxes[si]
+        cls_scores = cls_scores[si]
+
         _dets = np.hstack((cls_boxes,
                            cls_scores[:, np.newaxis])).astype(np.float32)
         keep = nms(_dets, NMS_THRESH)
@@ -100,7 +107,7 @@ def demo(net, imdb, image_path):
     ind_to_cls = dict([(i, cls) for i, cls in enumerate(imdb.classes)])
     viz_detections(im, cls_inds, dets, ind_to_cls, CONF_THRESH)
     # save img.
-    plt.savefig('demo_tmp1.jpeg')
+    # plt.savefig('demo_tmp1.jpeg')
 
 
 def parse_args():
