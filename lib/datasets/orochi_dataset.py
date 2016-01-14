@@ -212,7 +212,7 @@ class orochi_dataset(datasets.imdb):
             ret[i] = (img_ids, dets)
         return clss, ret
 
-    def evaluate_detections(self, all_boxes, output_dir=None):
+    def evaluate_detections(self, all_boxes, output_dir):
         """
         all_boxes is a list of length number-of-classes.
         Each list element is a list of length number-of-images.
@@ -229,7 +229,7 @@ class orochi_dataset(datasets.imdb):
             gtb_obj = pickle.load(fid)
 
         clss, boxes = self._conv_all_boxes_for_eval(all_boxes)
-        orochi_eval.orochi_eval(clss, boxes, gtb_obj)
+        orochi_eval.orochi_eval(clss, boxes, gtb_obj, output_dir)
 
     def append_flipped_images(self):
         num_images = self.num_images
