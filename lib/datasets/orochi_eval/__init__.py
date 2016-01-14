@@ -48,8 +48,9 @@ def _create_gt_info_for_cls(cls, boxes_info, gtb_obj):
     gt_ids = np.zeros(0, dtype=np.str)
     gt_boxes = np.zeros((0, 4), dtype=np.float)
 
-    for i in xrange(img_ids.size):
-        img_id = img_ids[i]
+    uniq_img_ids = np.unique(img_ids)
+    for i in xrange(uniq_img_ids.size):
+        img_id = uniq_img_ids[i]
         gt_boxes_for_img = gtb_obj['boxes'][img_id]
         gt_labels_for_img = gtb_obj['labels'][img_id]
         inds = np.where(gt_labels_for_img == cls)[0]
