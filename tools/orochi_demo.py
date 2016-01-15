@@ -26,6 +26,7 @@ import cv2
 import argparse
 from datasets.orochi_factory import get_imdb
 import datasets.ds_cfg
+from datetime import datetime
 
 
 def viz_detections(im, cls_inds, dets, ind_to_cls, thresh):
@@ -63,7 +64,7 @@ def viz_detections(im, cls_inds, dets, ind_to_cls, thresh):
     plt.draw()
 
 
-def demo(net, imdb, image_path):
+def demo(net, imdb, image_path, save_img):
     """
     Detect object classes in an image using pre-computed object proposals.
     """
@@ -106,8 +107,14 @@ def demo(net, imdb, image_path):
 
     ind_to_cls = dict([(i, cls) for i, cls in enumerate(imdb.classes)])
     viz_detections(im, cls_inds, dets, ind_to_cls, CONF_THRESH)
-    # save img.
-    # plt.savefig('demo_tmp1.jpeg')
+
+    if save_img:
+        basename = osp.basename(image_path)
+        filename, ext = osp.splitext(basename)
+        ts = '{:%Y%m%d%H%M%S}'.format(datetime.now())
+        output_filename = '{}_{}{}'.format(filename, ts, ext)
+        plt.savefig(output_filename)
+        print 'Saved result to {}'.format(output_filename)
 
 
 def parse_args():
@@ -125,6 +132,9 @@ def parse_args():
     parser.add_argument('--prototxt-path', dest='prototxt_path',
                         help='prototxt path',
                         required=True, type=str)
+    parser.add_argument('--save', dest='save_img',
+                        help='save result image to local',
+                        action='store_true')
     parser.add_argument('image_paths', nargs='*', help='results directory',
                         type=str)
 
@@ -172,6 +182,6 @@ if __name__ == '__main__':
     for img_path in img_paths:
         print '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~'
         print 'Demo for {}'.format(img_path)
-        demo(net, imdb, img_path)
+        demo(net, imdb, img_path, args.save_img)
 
     plt.show()
