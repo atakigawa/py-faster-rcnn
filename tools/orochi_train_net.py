@@ -22,6 +22,7 @@ import numpy as np
 import sys
 import os.path as osp
 from datetime import datetime
+import jinja2
 
 
 def parse_args():
@@ -108,13 +109,14 @@ def generate_prototxts(imdb, args):
     with open(train_template_path, 'r') as f:
         train_txt = f.read()
 
-    solver_txt = solver_txt.replace(
-        '{{train_prototxt_path}}', train_prototxt_path)
+    solver_txt = jinja2.Template(solver_txt).render(
+        train_prototxt_path=train_prototxt_path
+    )
 
-    train_txt = train_txt.replace(
-        '{{num_classes}}', str(imdb.num_classes))
-    train_txt = train_txt.replace(
-        '{{num_bbox_pred_output}}', str(imdb.num_classes * 4))
+    train_txt = jinja2.Template(train_txt).render(
+        num_classes=imdb.num_classes,
+        num_bbox_pred_output=(imdb.num_classes * 4)
+    )
 
     with open(solver_prototxt_path, 'w') as f:
         f.write(solver_txt)
