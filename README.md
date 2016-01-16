@@ -78,11 +78,11 @@ If you find Faster R-CNN useful in your research, please consider citing:
 
    *Ignore notes 1 and 2 if you followed step 1 above.*
 
-   **Note 1:** If you didn't clone Faster R-CNN with the `--recursive` flag, then you'll need to manually clone the `caffe-fast-rcnn` submodule:
+   **Note 1:** If you didn't clone Faster R-CNN with the `--recursive` flag, then you'll need to manually clone the `caffe` submodule:
     ```Shell
     git submodule update --init --recursive
     ```
-    **Note 2:** The `caffe-fast-rcnn` submodule needs to be on the `faster-rcnn` branch (or equivalent detached state). This will happen automatically *if you followed step 1 instructions*.
+    **Note 2:** The `caffe` submodule needs to be on the `orochi-faster-rcnn` branch (or equivalent detached state). This will happen automatically *if you followed step 1 instructions*.
 
 3. Build the Cython modules
     ```Shell
@@ -92,7 +92,7 @@ If you find Faster R-CNN useful in your research, please consider citing:
 
 4. Build Caffe and pycaffe
     ```Shell
-    cd $FRCN_ROOT/caffe-fast-rcnn
+    cd $FRCN_ROOT/caffe
     # Now follow the Caffe installation instructions here:
     #   http://caffe.berkeleyvision.org/installation.html
 

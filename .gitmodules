@@ -1,4 +1,4 @@
-[submodule "caffe-fast-rcnn"]
-	path = caffe-fast-rcnn
-	url = https://github.com/atakigawa/caffe-fast-rcnn.git
-	branch = fast-rcnn
+[submodule "caffe"]
+	path = caffe
+	url = https://github.com/atakigawa/caffe.git
+	branch = orochi-faster-rcnn
