@@ -64,7 +64,13 @@ def from_results_files(imdb_name, output_dir):
     datasets.orochi_eval.print_eval_results(output_dir)
 
 
+def check_display():
+    assert (os.environ.get('DISPLAY') is not None), \
+        'DISPLAY env variable has to be exported.'
+
+
 if __name__ == '__main__':
+    check_display()
     args = parse_args()
 
     if args.cfg_file is not None:

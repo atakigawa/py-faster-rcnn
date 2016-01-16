@@ -21,6 +21,7 @@ from utils.timer import Timer
 import matplotlib.pyplot as plt
 import numpy as np
 import caffe
+import os
 import os.path as osp
 import cv2
 import argparse
@@ -143,7 +144,13 @@ def parse_args():
     return args
 
 
+def check_display():
+    assert (os.environ.get('DISPLAY') is not None), \
+        'DISPLAY env variable has to be exported.'
+
+
 if __name__ == '__main__':
+    check_display()
     cfg.TEST.HAS_RPN = True  # Use RPN for proposals
 
     args = parse_args()

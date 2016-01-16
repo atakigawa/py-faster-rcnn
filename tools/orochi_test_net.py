@@ -18,8 +18,8 @@ import caffe
 import argparse
 import pprint
 import time
-import os
 import sys
+import os
 import os.path as osp
 from datetime import datetime
 
@@ -88,7 +88,13 @@ def generate_prototxts(imdb, args):
     return test_prototxt_path
 
 
+def check_display():
+    assert (os.environ.get('DISPLAY') is not None), \
+        'DISPLAY env variable has to be exported.'
+
+
 if __name__ == '__main__':
+    check_display()
     args = parse_args()
 
     print('Called with args:')
@@ -103,10 +109,6 @@ if __name__ == '__main__':
 
     print('Using config:')
     pprint.pprint(cfg)
-
-    while not os.path.exists(args.caffemodel) and args.wait:
-        print('Waiting for {} to exist...'.format(args.caffemodel))
-        time.sleep(10)
 
     caffe.set_mode_gpu()
     caffe.set_device(args.gpu_id)
