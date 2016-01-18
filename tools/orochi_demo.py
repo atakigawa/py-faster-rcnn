@@ -30,7 +30,7 @@ import datasets.ds_cfg
 from datetime import datetime
 
 
-def viz_detections(im, cls_inds, dets, ind_to_cls, thresh):
+def viz_detections(im, cls_inds, dets, ind_to_cls, conf_thresh, nms_thresh):
     """Draw detected bounding boxes."""
 
     # BGR -> RGB
@@ -38,28 +38,35 @@ def viz_detections(im, cls_inds, dets, ind_to_cls, thresh):
 
     fig, ax = plt.subplots(figsize=(12, 12))
     ax.imshow(im, aspect='equal')
+    cnt = 0
     for i in xrange(cls_inds.size):
         cls_ind = cls_inds[i]
         cls = ind_to_cls[cls_ind].decode('utf-8')
         bbox = dets[i, :4]
         score = dets[i, -1]
 
-        if score < thresh:
+        if score < conf_thresh:
             continue
 
+        cnt += 1
         ax.add_patch(
             plt.Rectangle((bbox[0], bbox[1]),
                           bbox[2] - bbox[0],
                           bbox[3] - bbox[1], fill=False,
                           edgecolor='red', linewidth=3.5))
         ax.text(bbox[0], bbox[1] - 6,
-                # u'{:s} {:.2f}'.format(cls, score),
                 u'{:s}'.format(cls),
                 bbox=dict(facecolor='blue', alpha=0.5),
                 fontsize=8, color='white')
 
-    ax.set_title(('detections with (thresh >= {}:.1f)').format(
-        thresh), fontsize=14)
+        # print u'label:{:s} x,y,w,h:({},{},{},{}) score:{:.2f}'.format(
+        #     cls,
+        #     bbox[0], bbox[1], bbox[2] - bbox[0], bbox[3] - bbox[1],
+        #     score)
+
+    title = '{:d} detections with (confidence >= {:.1f}, NMS thres = {:.1f})'
+    ax.set_title(title.format(cnt, conf_thresh, nms_thresh),
+        fontsize=14)
     plt.axis('off')
     plt.tight_layout()
     plt.draw()
@@ -82,9 +89,9 @@ def demo(net, imdb, image_path, save_img):
            '{:d} object proposals').format(timer.total_time, boxes.shape[0])
 
     # Visualize detections
-    CONF_THRESH = 0.3
+    CONF_THRESH = 0.5
     # low NMS_THRESH rate is OK for OCR use case.
-    NMS_THRESH = 0.1
+    NMS_THRESH = 0.2
     # skip background
     cls_inds = np.zeros(0, dtype=np.int)
     dets = np.zeros((0, 5), dtype=np.float32)
@@ -107,7 +114,7 @@ def demo(net, imdb, image_path, save_img):
         dets = np.vstack((dets, _dets))
 
     ind_to_cls = dict([(i, cls) for i, cls in enumerate(imdb.classes)])
-    viz_detections(im, cls_inds, dets, ind_to_cls, CONF_THRESH)
+    viz_detections(im, cls_inds, dets, ind_to_cls, CONF_THRESH, NMS_THRESH)
 
     if save_img:
         basename = osp.basename(image_path)
