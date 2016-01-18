@@ -113,9 +113,17 @@ def generate_prototxts(imdb, args):
         train_prototxt_path=train_prototxt_path
     )
 
+    num_anchors = len(cfg.ANCHOR_RATIOS) * len(cfg.ANCHOR_SCALES)
     train_txt = jinja2.Template(train_txt).render(
         num_classes=imdb.num_classes,
-        num_bbox_pred_output=(imdb.num_classes * 4)
+        num_bbox_pred_output=(imdb.num_classes * 4),
+        shrink_scale=cfg.SHRINK_SCALE,
+        shrink_scale_inv=(1.0 / cfg.SHRINK_SCALE),
+        anchor_ratios=cfg.ANCHOR_RATIOS,
+        anchor_scales=cfg.ANCHOR_SCALES,
+        num_anchors=num_anchors,
+        num_output_rpn_cls=(2 * num_anchors),  # 2 = bg/fg
+        num_output_rpn_bbox=(4 * num_anchors)  # 4 = x1,y1,x2,y2
     )
 
     with open(solver_prototxt_path, 'w') as f:

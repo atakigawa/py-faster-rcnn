@@ -201,6 +201,15 @@ __C.GPU_ID = 0
 # Use matlab when evaluating results?
 __C.USE_MATLAB = True
 
+# the size of the original image coordinates compared with
+# feature map coordinates of conv result.
+__C.SHRINK_SCALE = 16
+
+# anchor ratios
+__C.ANCHOR_RATIOS = [0.5, 1, 2]
+# anchor scales
+__C.ANCHOR_SCALES = [8, 16, 32]
+
 
 def get_output_dir(imdb, net):
     """Return the directory where experimental artifacts are placed.

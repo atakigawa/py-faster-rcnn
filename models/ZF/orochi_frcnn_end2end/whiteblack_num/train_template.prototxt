@@ -236,7 +236,7 @@ layer {
   param { lr_mult: 1.0 }
   param { lr_mult: 2.0 }
   convolution_param {
-    num_output: 18   # 2(bg/fg) * 9(anchors)
+    num_output: {{num_output_rpn_cls}}   # 2(bg/fg) * {{num_anchors}}(anchors)
     kernel_size: 1 pad: 0 stride: 1
     weight_filler { type: "gaussian" std: 0.01 }
     bias_filler { type: "constant" value: 0 }
@@ -250,7 +250,7 @@ layer {
   param { lr_mult: 1.0 }
   param { lr_mult: 2.0 }
   convolution_param {
-    num_output: 36   # 4 * 9(anchors)
+    num_output: {{num_output_rpn_bbox}}   # 4 * {{num_anchors}}(anchors)
     kernel_size: 1 pad: 0 stride: 1
     weight_filler { type: "gaussian" std: 0.01 }
     bias_filler { type: "constant" value: 0 }
@@ -277,7 +277,7 @@ layer {
   python_param {
     module: 'rpn.anchor_target_layer'
     layer: 'AnchorTargetLayer'
-    param_str: "'feat_stride': 16"
+    param_str: "'feat_stride': {{shrink_scale}}\n'anchor_ratios': {{anchor_ratios}}\n'anchor_scales': {{anchor_scales}}"
   }
 }
 layer {
@@ -319,7 +319,7 @@ layer {
   type: 'Reshape'
   bottom: 'rpn_cls_prob'
   top: 'rpn_cls_prob_reshape'
-  reshape_param { shape { dim: 0 dim: 18 dim: -1 dim: 0 } }
+  reshape_param { shape { dim: 0 dim: {{num_output_rpn_cls}} dim: -1 dim: 0 } }
 }
 layer {
   name: 'proposal'
@@ -332,7 +332,7 @@ layer {
   python_param {
     module: 'rpn.proposal_layer'
     layer: 'ProposalLayer'
-    param_str: "'feat_stride': 16"
+    param_str: "'feat_stride': {{shrink_scale}}\n'anchor_ratios': {{anchor_ratios}}\n'anchor_scales': {{anchor_scales}}"
   }
 }
 #layer {
@@ -374,7 +374,7 @@ layer {
   roi_pooling_param {
     pooled_w: 6
     pooled_h: 6
-    spatial_scale: 0.0625 # 1/16
+    spatial_scale: {{shrink_scale_inv}}
   }
 }
 layer {
